@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: homeserver-speedtest-deployment
+  name: homeserver-deployment
 spec:
   selector:
     matchLabels:
