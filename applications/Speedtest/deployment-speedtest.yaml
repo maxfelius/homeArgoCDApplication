@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homeserver-deployment
+spec:
+  selector:
+    matchLabels:
+      app: homeserver
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: homeserver-speedtest
+    spec:
+      containers:
+      - name: speedtest
+        image: henrywhitaker3/speedtest-tracker
+        ports:
+        - containerPort: 80
+        volumes:
+        - /path/to/data:/config
+        env:
+        - name: TZ
+          value: "UTC"
+        - name: PGID
+          value: 
+        - name: PUID
+          value: 
+        - name: OOKLA_EULA_GDPR
+          value: true
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        hostPath:
+          path: /home/max/Documents/max/data/speedtest
+          type: DirectoryOrCreate
