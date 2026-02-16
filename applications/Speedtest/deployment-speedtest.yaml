@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: homeserver-deployment
+  name: homeserver-speedtest-deployment
 spec:
   selector:
     matchLabels:
-      app: homeserver
+      app: homeserver-argo-application
   replicas: 1
   template:
     metadata:

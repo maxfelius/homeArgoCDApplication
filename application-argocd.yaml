@@ -1,4 +1,4 @@
-apiVersion: argoproj.io/v1aplha1
+apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: homeserver-argo-application
@@ -10,7 +10,7 @@ spec:
     repoURL: https://github.com/maxfelius/homeArgoCDApplication.git
     targetRevision: HEAD
     path: applications
-  destnation:
+  destination:
     server: https://kubernetes.default.svc
     namespace: homeserver
 
