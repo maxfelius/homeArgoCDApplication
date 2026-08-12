@@ -17,8 +17,6 @@ spec:
         image: henrywhitaker3/speedtest-tracker
         ports:
         - containerPort: 80
-        volumes:
-        - /path/to/data:/config
         env:
         - name: TZ
           value: "UTC"
