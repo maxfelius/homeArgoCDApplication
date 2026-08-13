@@ -16,8 +16,7 @@ data:
     http {
       include /etc/nginx/mime.types;
       types {
-        application/javascript js mjs;
-        application/wasm wasm;
+        application/javascript mjs;
       }
       default_type application/octet-stream;
 
@@ -102,7 +101,7 @@ spec:
     spec:
       initContainers:
         - name: prepare-site
-          image: ghcr.io/alam00000/bentopdf-simple:latest
+          image: ghcr.io/alam00000/bentopdf-simple:v2.8.7
           imagePullPolicy: IfNotPresent
           command:
             - sh
