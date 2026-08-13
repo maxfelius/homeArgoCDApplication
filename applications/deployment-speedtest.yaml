@@ -26,6 +26,8 @@ spec:
           value: "1000"
         - name: OOKLA_EULA_GDPR
           value: "true"
+        - name: BASE_PATH
+          value: "/speedtest"
         volumeMounts:
         - name: config
           mountPath: /config
