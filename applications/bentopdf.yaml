@@ -56,8 +56,8 @@ data:
 
         location ~* ^/pdf/.*\.(js|mjs|css|woff|woff2|ttf|eot|otf)$ {
           try_files $uri =404;
-          expires 1y;
-          add_header Cache-Control "public, immutable";
+          expires 5m;
+          add_header Cache-Control "no-cache" always;
           add_header Cross-Origin-Opener-Policy "same-origin" always;
           add_header Cross-Origin-Embedder-Policy "credentialless" always;
           add_header Cross-Origin-Resource-Policy "cross-origin" always;
@@ -128,6 +128,9 @@ spec:
                   -e "s#'/favicon.ico#'/pdf/favicon.ico#g" \
                   -e 's#href:`/#href:`/pdf/#g' \
                   -e 's#href="/"#href="/pdf/"#g'
+              find /site/pdf -type f -name '*.html' -print0 \
+                | xargs -0 sed -i -E \
+                  's#(/pdf/assets/[^" ]+\.(js|css))#\1?v=pdf-tools-v2#g'
           volumeMounts:
             - name: site
               mountPath: /site
