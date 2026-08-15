@@ -122,7 +122,7 @@ spec:
             - name: APP_BASE_DIR
               value: "/hortusfox"
             - name: APP_DEBUG
-              value: "false"
+              value: "true"
             - name: DB_HOST
               value: "hortusfox-db"
             - name: DB_PORT
@@ -137,7 +137,7 @@ spec:
               value: "utf8mb4"
           readinessProbe:
             httpGet:
-              path: /hortusfox/auth
+              path: /auth
               port: http
             initialDelaySeconds: 40
             periodSeconds: 10
@@ -145,7 +145,7 @@ spec:
             failureThreshold: 12
           livenessProbe:
             httpGet:
-              path: /hortusfox/auth
+              path: /auth
               port: http
             initialDelaySeconds: 120
             periodSeconds: 30

@@ -65,6 +65,7 @@ data:
 
         location /hortusfox/ {
           set $hortusfox_upstream "hortusfox.homeserver.svc.cluster.local:80";
+          rewrite ^/hortusfox/(.*)$ /$1 break;
           proxy_pass http://$hortusfox_upstream;
           proxy_http_version 1.1;
           proxy_set_header Host $http_host;
