@@ -126,6 +126,7 @@ spec:
                   -e "s#'/libreoffice-wasm/#'/pdf/libreoffice-wasm/#g" \
                   -e 's#"/favicon.ico#"/pdf/favicon.ico#g' \
                   -e "s#'/favicon.ico#'/pdf/favicon.ico#g" \
+                  -e 's#href:`/#href:`/pdf/#g' \
                   -e 's#href="/"#href="/pdf/"#g'
           volumeMounts:
             - name: site
