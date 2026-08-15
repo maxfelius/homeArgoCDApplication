@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adguard-home
+  labels:
+    app.kubernetes.io/name: adguard-home
+    app.kubernetes.io/part-of: homeserver-gitops
+  annotations:
+    homeserver.maxfelius.nl/dns-exposure-note: "Safe phase 1: DNS is exposed on NodePort 30053 only. Do not enable hostPort 53 until AdGuard initial setup/config is complete and failover has been verified."
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: adguard-home
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: adguard-home
+        app.kubernetes.io/part-of: homeserver-gitops
+    spec:
+      containers:
+        - name: adguard-home
+          image: adguard/adguardhome:v0.107.78
+          imagePullPolicy: IfNotPresent
+          args:
+            - --no-check-update
+            - --web-addr
+            - 0.0.0.0:3000
+            - --work-dir
+            - /opt/adguardhome/work
+            - --config
+            - /opt/adguardhome/conf/AdGuardHome.yaml
+          ports:
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: web
+              containerPort: 3000
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: web
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: web
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          volumeMounts:
+            - name: adguard-work
+              mountPath: /opt/adguardhome/work
+            - name: adguard-conf
+              mountPath: /opt/adguardhome/conf
+      volumes:
+        - name: adguard-work
+          hostPath:
+            path: /home/max/homeserver-data/adguardhome/work
+            type: DirectoryOrCreate
+        - name: adguard-conf
+          hostPath:
+            path: /home/max/homeserver-data/adguardhome/conf
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home
+  labels:
+    app.kubernetes.io/name: adguard-home
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: adguard-home
+  ports:
+    - name: dns-tcp
+      port: 53
+      targetPort: dns-tcp
+      protocol: TCP
+    - name: dns-udp
+      port: 53
+      targetPort: dns-udp
+      protocol: UDP
+    - name: web
+      port: 3000
+      targetPort: web
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: adguard-home-nodeport
+  labels:
+    app.kubernetes.io/name: adguard-home
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: adguard-home
+  externalTrafficPolicy: Local
+  ports:
+    - name: dns-tcp
+      port: 53
+      targetPort: dns-tcp
+      nodePort: 30053
+      protocol: TCP
+    - name: dns-udp
+      port: 53
+      targetPort: dns-udp
+      nodePort: 30053
+      protocol: UDP
+    - name: web
+      port: 3000
+      targetPort: web
+      nodePort: 30080
+      protocol: TCP
