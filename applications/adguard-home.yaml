@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: adguard-home
     app.kubernetes.io/part-of: homeserver-gitops
   annotations:
-    homeserver.maxfelius.nl/dns-exposure-note: "AdGuard setup is complete and DNS was verified on NodePort 30053. The workload uses hostNetwork so both UDP and TCP DNS are available on standard LAN port 53."
+    homeserver.maxfelius.nl/dns-exposure-note: "Safe phase 1: DNS is exposed on NodePort 30053 only. Do not enable hostPort 53 until AdGuard initial setup/config is complete and failover has been verified."
 spec:
   replicas: 1
   strategy:
@@ -20,8 +20,6 @@ spec:
         app.kubernetes.io/name: adguard-home
         app.kubernetes.io/part-of: homeserver-gitops
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: adguard-home
           image: adguard/adguardhome:v0.107.78
