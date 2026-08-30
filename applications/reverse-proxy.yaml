@@ -100,6 +100,38 @@ data:
           proxy_set_header X-Forwarded-Host $http_host;
         }
 
+        location = /prometheus {
+          return 308 $external_scheme://$http_host/prometheus/;
+        }
+
+        location /prometheus/ {
+          set $prometheus_upstream "prometheus.homeserver.svc.cluster.local:9090";
+          proxy_pass http://$prometheus_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /prometheus;
+        }
+
+        location = /grafana {
+          return 308 $external_scheme://$http_host/grafana/;
+        }
+
+        location /grafana/ {
+          set $grafana_upstream "grafana.homeserver.svc.cluster.local:3000";
+          proxy_pass http://$grafana_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /grafana;
+        }
+
         location = /adguard {
           return 308 $external_scheme://$http_host/adguard/;
         }
@@ -182,6 +214,8 @@ data:
           <a class="nav-item" href="/speedtest/">Speedtest Tracker</a>
           <a class="nav-item" href="/pdf/">BentoPDF</a>
           <a class="nav-item" href="/adguard/">AdGuard Home</a>
+          <a class="nav-item" href="/prometheus/">Prometheus</a>
+          <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="/hortusfox/">HortusFox</a>
           <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
         </aside>
@@ -205,6 +239,8 @@ data:
               <a class="link-card" href="/pdf/"><div class="link-title">BentoPDF</div><div class="link-meta">PDF tools for merge, split, compress, and workflows.</div></a>
               <a class="link-card" href="/adguard/"><div class="link-title">AdGuard Home</div><div class="link-meta">DNS filtering dashboard and query log.</div></a>
               <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
+              <a class="link-card" href="/prometheus/"><div class="link-title">Prometheus</div><div class="link-meta">Metrics collection, targets, and time-series queries.</div></a>
+              <a class="link-card" href="/grafana/"><div class="link-title">Grafana</div><div class="link-meta">Dashboards and visualizations backed by Prometheus.</div></a>
               <a class="link-card" href="http://192.168.10.176:4444/home"><div class="link-title">Old homepage</div><div class="link-meta">The original Prinsengracht homepage at 192.168.10.176:4444/home.</div></a>
             </div>
           </section>
@@ -216,6 +252,8 @@ data:
               <div class="tile"><strong>/speedtest</strong><span>Speedtest Tracker route</span></div>
               <div class="tile"><strong>/pdf</strong><span>BentoPDF route</span></div>
               <div class="tile"><strong>/adguard</strong><span>AdGuard Home route</span></div>
+              <div class="tile"><strong>/prometheus</strong><span>Prometheus metrics route</span></div>
+              <div class="tile"><strong>/grafana</strong><span>Grafana dashboards route</span></div>
             </div>
           </section>
         </section>
