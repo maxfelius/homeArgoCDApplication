@@ -12,6 +12,12 @@ data:
     http {
       resolver kube-dns.kube-system.svc.cluster.local valid=30s ipv6=off;
 
+      map $http_x_forwarded_proto $external_scheme {
+        default $scheme;
+        http http;
+        https https;
+      }
+
       server {
         listen 8080;
         server_name _;
@@ -28,7 +34,7 @@ data:
         }
 
         location = /speedtest {
-          return 308 $scheme://$http_host/speedtest/;
+          return 308 $external_scheme://$http_host/speedtest/;
         }
 
         location /speedtest/ {
@@ -38,13 +44,13 @@ data:
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
           proxy_set_header X-Forwarded-Host $host;
           proxy_set_header X-Forwarded-Prefix /speedtest;
         }
 
         location = /pdf {
-          return 308 $scheme://$http_host/pdf/;
+          return 308 $external_scheme://$http_host/pdf/;
         }
 
         location /pdf/ {
@@ -54,13 +60,13 @@ data:
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
           proxy_set_header X-Forwarded-Host $host;
           proxy_set_header X-Forwarded-Prefix /pdf;
         }
 
         location = /hortusfox {
-          return 308 $scheme://$http_host/hortusfox/;
+          return 308 $external_scheme://$http_host/hortusfox/;
         }
 
         location /hortusfox/ {
@@ -71,11 +77,11 @@ data:
           proxy_set_header Host $http_host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
           proxy_set_header X-Forwarded-Host $http_host;
           proxy_set_header X-Forwarded-Prefix /hortusfox;
-          proxy_redirect ~^https?://[^/]+(/.*)$ $scheme://$http_host/hortusfox$1;
-          proxy_redirect ~^(/.*)$ $scheme://$http_host/hortusfox$1;
+          proxy_redirect ~^https?://[^/]+(/.*)$ $external_scheme://$http_host/hortusfox$1;
+          proxy_redirect ~^(/.*)$ $external_scheme://$http_host/hortusfox$1;
           proxy_cookie_path / /hortusfox/;
         }
 
@@ -90,12 +96,12 @@ data:
           proxy_set_header Host $http_host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
           proxy_set_header X-Forwarded-Host $http_host;
         }
 
         location = /adguard {
-          return 308 $scheme://$http_host/adguard/;
+          return 308 $external_scheme://$http_host/adguard/;
         }
 
         location /adguard/ {
@@ -106,11 +112,11 @@ data:
           proxy_set_header Host $http_host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
           proxy_set_header X-Forwarded-Host $http_host;
           proxy_set_header X-Forwarded-Prefix /adguard;
-          proxy_redirect ~^https?://[^/]+(/.*)$ $scheme://$http_host/adguard$1;
-          proxy_redirect ~^(/.*)$ $scheme://$http_host/adguard$1;
+          proxy_redirect ~^https?://[^/]+(/.*)$ $external_scheme://$http_host/adguard$1;
+          proxy_redirect ~^(/.*)$ $external_scheme://$http_host/adguard$1;
           proxy_cookie_path / /adguard/;
         }
       }
