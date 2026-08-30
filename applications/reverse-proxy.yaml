@@ -141,20 +141,20 @@ spec:
           image: nginx:1.27-alpine
           imagePullPolicy: IfNotPresent
           ports:
-            - name: http
+            - name: http-4445
               containerPort: 8080
               hostPort: 4445
               protocol: TCP
           readinessProbe:
             httpGet:
               path: /healthz
-              port: http
+              port: http-4445
             initialDelaySeconds: 3
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /healthz
-              port: http
+              port: http-4445
             initialDelaySeconds: 10
             periodSeconds: 20
           volumeMounts:
@@ -181,5 +181,29 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: http
+      targetPort: http-4445
       protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homeserver-reverse-proxy-http
+  labels:
+    app.kubernetes.io/name: homeserver-reverse-proxy
+    app.kubernetes.io/part-of: homeserver-gitops
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - {}
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homeserver-reverse-proxy
+                port:
+                  number: 80
