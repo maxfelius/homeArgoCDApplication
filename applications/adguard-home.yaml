@@ -35,11 +35,9 @@ spec:
           ports:
             - name: dns-tcp
               containerPort: 53
-              hostPort: 5353
               protocol: TCP
             - name: dns-udp
               containerPort: 53
-              hostPort: 5353
               protocol: UDP
             - name: web
               containerPort: 3000
@@ -59,6 +57,46 @@ spec:
               mountPath: /opt/adguardhome/work
             - name: adguard-conf
               mountPath: /opt/adguardhome/conf
+        - name: dns-tcp-5353-proxy
+          image: alpine/socat:1.8.1.3
+          imagePullPolicy: IfNotPresent
+          args:
+            - -dd
+            - -T
+            - "15"
+            - TCP4-LISTEN:5353,fork,reuseaddr
+            - TCP4:127.0.0.1:53
+          ports:
+            - name: dns-tcp-5353
+              containerPort: 5353
+              hostPort: 5353
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+        - name: dns-udp-5353-proxy
+          image: alpine/socat:1.8.1.3
+          imagePullPolicy: IfNotPresent
+          args:
+            - -dd
+            - -T
+            - "15"
+            - UDP4-LISTEN:5353,fork,reuseaddr
+            - UDP4:127.0.0.1:53
+          ports:
+            - name: dns-udp-5353
+              containerPort: 5353
+              hostPort: 5353
+              protocol: UDP
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
       volumes:
         - name: adguard-work
           hostPath:
