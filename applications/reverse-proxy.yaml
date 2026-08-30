@@ -23,8 +23,8 @@ data:
         server_name _;
 
         location = / {
-          default_type text/html;
-          return 200 '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Homeserver</title><style>body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:760px;margin:3rem auto;padding:0 1rem;line-height:1.5;color:#e5e7eb;background:#111827}a{color:#60a5fa;text-decoration:none}a:hover{text-decoration:underline}.card{background:#1f2937;border:1px solid #374151;border-radius:12px;padding:1.25rem}ul{padding-left:1.25rem}</style></head><body><h1>Homeserver</h1><div class="card"><h2>Applications</h2><ul><li><a href="/speedtest/">Speedtest Tracker</a></li><li><a href="/pdf/">BentoPDF</a></li><li><a href="/adguard/">AdGuard Home</a></li><li><a href="/hortusfox/">HortusFox</a></li></ul></div></body></html>';
+          root /usr/share/nginx/html;
+          try_files /index.html =404;
         }
 
         location = /healthz {
@@ -121,6 +121,108 @@ data:
         }
       }
     }
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Homeserver</title>
+      <style>
+        :root { --bg:#f3f6fb; --card:#ffffff; --card-2:#eef3f9; --text:#1f2937; --muted:#64748b; --accent:#2563eb; --accent-2:#0f172a; --border:rgba(15,23,42,.08); --shadow:0 18px 40px rgba(15,23,42,.10); }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 24%), linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%); color: var(--text); }
+        .topbar { position: sticky; top:0; z-index:10; display:flex; align-items:center; gap:16px; padding:14px 20px; background:rgba(248,251,255,.9); backdrop-filter: blur(12px); border-bottom:1px solid var(--border); }
+        .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.01em; white-space:nowrap; }
+        .brand-badge { width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,var(--accent),#60a5fa); box-shadow:0 12px 20px rgba(37,99,235,.22); }
+        .search { flex:1; display:flex; justify-content:center; }
+        .search input { width:min(760px,100%); padding:14px 18px; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--text); outline:none; }
+        .search input:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(37,99,235,.14); }
+        .layout { max-width:1400px; margin:0 auto; padding:22px; display:grid; grid-template-columns:260px 1fr; gap:22px; }
+        .sidebar,.hero,.panel,.link-card,.tile { background:var(--card); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow); }
+        .sidebar { padding:18px; height:fit-content; position:sticky; top:86px; }
+        .section-label { font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+        .nav-item { display:block; padding:12px 14px; margin-bottom:8px; border-radius:14px; text-decoration:none; color:var(--text); background:var(--card-2); }
+        .nav-item:hover { color:var(--accent); }
+        .content { display:grid; gap:20px; }
+        .hero { padding:28px; overflow:hidden; position:relative; }
+        .hero::after { content:""; position:absolute; inset:auto -70px -90px auto; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(37,99,235,.16),transparent 60%); pointer-events:none; }
+        .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.16em; font-size:12px; font-weight:700; }
+        h1 { margin:10px 0 12px; font-size:clamp(2.1rem,4vw,4rem); line-height:1.05; max-width:12ch; }
+        .hero p { max-width:62ch; color:var(--muted); line-height:1.75; font-size:1.02rem; }
+        .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+        .chip { padding:10px 14px; border-radius:999px; background:#eff6ff; border:1px solid rgba(37,99,235,.12); color:var(--accent-2); font-size:14px; font-weight:600; }
+        .panel { padding:18px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+        .link-card { padding:18px; text-decoration:none; color:var(--text); transition:transform .18s ease, box-shadow .18s ease; }
+        .link-card:hover { transform:translateY(-2px); box-shadow:0 22px 48px rgba(15,23,42,.14); }
+        .link-title { font-weight:800; margin:0 0 8px; }
+        .link-meta { color:var(--muted); font-size:14px; line-height:1.55; }
+        .proxy-box { margin-top:18px; padding:16px; border-radius:18px; background:#f8fbff; border:1px dashed rgba(37,99,235,.25); color:var(--muted); line-height:1.7; }
+        .tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+        .tile { padding:18px; background:linear-gradient(180deg,#fff,#f8fbff); }
+        .tile strong { display:block; font-size:1.35rem; margin-bottom:4px; }
+        .tile span { color:var(--muted); font-size:13px; }
+        @media (max-width:960px){ .layout{grid-template-columns:1fr} .sidebar{position:static} }
+        @media (max-width:640px){ .topbar{flex-wrap:wrap} .search{order:3;width:100%} .tiles{grid-template-columns:1fr} }
+      </style>
+    </head>
+    <body>
+      <header class="topbar">
+        <div class="brand"><div class="brand-badge"></div> Homeserver</div>
+        <div class="search"><input aria-label="Search" placeholder="Search apps and services" oninput="const q=this.value.toLowerCase();document.querySelectorAll('.link-card').forEach(a=>a.style.display=a.textContent.toLowerCase().includes(q)?'block':'none')" /></div>
+        <div class="chip">80 / 443 / 4445</div>
+      </header>
+      <main class="layout">
+        <aside class="sidebar">
+          <div class="section-label">Places</div>
+          <a class="nav-item" href="/">Home</a>
+          <a class="nav-item" href="#apps">Applications</a>
+          <a class="nav-item" href="#status">Routes</a>
+          <a class="nav-item" href="/speedtest/">Speedtest Tracker</a>
+          <a class="nav-item" href="/pdf/">BentoPDF</a>
+          <a class="nav-item" href="/adguard/">AdGuard Home</a>
+          <a class="nav-item" href="/hortusfox/">HortusFox</a>
+          <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
+        </aside>
+        <section class="content">
+          <section class="hero" id="home">
+            <div class="eyebrow">Startpagina-style homepage</div>
+            <h1>Homeserver homepage.</h1>
+            <p>This is the front page for navigating to the services running on the home Kubernetes cluster. The current gateway is available on standard web ports and the legacy direct reverse-proxy port.</p>
+            <div class="chips">
+              <span class="chip">http://192.168.10.128/</span>
+              <span class="chip">https://192.168.10.128/</span>
+              <span class="chip">:4445 direct gateway</span>
+              <span class="chip">GitOps managed</span>
+            </div>
+            <div class="proxy-box" id="proxy">Current behavior: standard HTTP and HTTPS are routed through Traefik Ingress to this nginx reverse proxy. The old homepage remains available at <strong>192.168.10.176:4444/home</strong>.</div>
+          </section>
+          <section class="panel" id="apps">
+            <div class="section-label">Quick links</div>
+            <div class="grid">
+              <a class="link-card" href="/speedtest/"><div class="link-title">Speedtest Tracker</div><div class="link-meta">Network speed tracking and history.</div></a>
+              <a class="link-card" href="/pdf/"><div class="link-title">BentoPDF</div><div class="link-meta">PDF tools for merge, split, compress, and workflows.</div></a>
+              <a class="link-card" href="/adguard/"><div class="link-title">AdGuard Home</div><div class="link-meta">DNS filtering dashboard and query log.</div></a>
+              <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
+              <a class="link-card" href="http://192.168.10.176:4444/home"><div class="link-title">Old homepage</div><div class="link-meta">The original Prinsengracht homepage at 192.168.10.176:4444/home.</div></a>
+            </div>
+          </section>
+          <section class="panel" id="status">
+            <div class="tiles">
+              <div class="tile"><strong>80</strong><span>Standard HTTP via Traefik</span></div>
+              <div class="tile"><strong>443</strong><span>Standard HTTPS via Traefik</span></div>
+              <div class="tile"><strong>4445</strong><span>Direct reverse-proxy port</span></div>
+              <div class="tile"><strong>/speedtest</strong><span>Speedtest Tracker route</span></div>
+              <div class="tile"><strong>/pdf</strong><span>BentoPDF route</span></div>
+              <div class="tile"><strong>/adguard</strong><span>AdGuard Home route</span></div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </body>
+    </html>
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -167,6 +269,10 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+              readOnly: true
+            - name: nginx-config
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
               readOnly: true
       volumes:
         - name: nginx-config
