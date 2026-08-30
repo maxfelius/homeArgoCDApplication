@@ -214,6 +214,7 @@ data:
           <a class="nav-item" href="/speedtest/">Speedtest Tracker</a>
           <a class="nav-item" href="/pdf/">BentoPDF</a>
           <a class="nav-item" href="/adguard/">AdGuard Home</a>
+          <a class="nav-item" href="https://192.168.10.128:30443/">Argo CD</a>
           <a class="nav-item" href="/prometheus/">Prometheus</a>
           <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="/hortusfox/">HortusFox</a>
@@ -238,6 +239,7 @@ data:
               <a class="link-card" href="/speedtest/"><div class="link-title">Speedtest Tracker</div><div class="link-meta">Network speed tracking and history.</div></a>
               <a class="link-card" href="/pdf/"><div class="link-title">BentoPDF</div><div class="link-meta">PDF tools for merge, split, compress, and workflows.</div></a>
               <a class="link-card" href="/adguard/"><div class="link-title">AdGuard Home</div><div class="link-meta">DNS filtering dashboard and query log.</div></a>
+              <a class="link-card" href="https://192.168.10.128:30443/"><div class="link-title">Argo CD</div><div class="link-meta">GitOps application status and sync dashboard.</div></a>
               <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
               <a class="link-card" href="/prometheus/"><div class="link-title">Prometheus</div><div class="link-meta">Metrics collection, targets, and time-series queries.</div></a>
               <a class="link-card" href="/grafana/"><div class="link-title">Grafana</div><div class="link-meta">Dashboards and visualizations backed by Prometheus.</div></a>
