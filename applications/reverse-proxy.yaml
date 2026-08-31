@@ -10,12 +10,17 @@ data:
     events {}
 
     http {
-      resolver kube-dns.kube-system.svc.cluster.local valid=30s ipv6=off;
+      resolver 10.43.0.10 valid=30s ipv6=off;
 
       map $http_x_forwarded_proto $external_scheme {
         default $scheme;
         http http;
         https https;
+      }
+
+      map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
       }
 
       server {
@@ -151,6 +156,50 @@ data:
           proxy_redirect ~^(/.*)$ $external_scheme://$http_host/adguard$1;
           proxy_cookie_path / /adguard/;
         }
+
+        location = /mealie {
+          return 308 $external_scheme://$http_host/mealie/;
+        }
+
+        location /mealie/ {
+          set $mealie_upstream "mealie.homeserver.svc.cluster.local:9000";
+          proxy_pass http://$mealie_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Accept-Encoding "";
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /mealie;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_redirect ~^https?://[^/]+(/.*)$ $external_scheme://$http_host/mealie$1;
+          proxy_redirect ~^(/.*)$ $external_scheme://$http_host/mealie$1;
+          proxy_cookie_path / /mealie/;
+          sub_filter_once off;
+          sub_filter_types application/javascript;
+          sub_filter 'SUB_PATH:""' 'SUB_PATH:"/mealie"';
+          sub_filter 'baseURL:"/"' 'baseURL:"/mealie/"';
+        }
+
+        # Mealie's frontend still references a few root-relative API and
+        # static paths. Route narrowly scoped app-owned root paths so the
+        # visible browser entrypoint remains /mealie/ without exposing a
+        # second homepage at /.
+        location ~ ^/(api|_nuxt|icons|svgs|manifest\.webmanifest|favicon\.ico)(/|$) {
+          set $mealie_upstream "mealie.homeserver.svc.cluster.local:9000";
+          proxy_pass http://$mealie_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /mealie;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+        }
       }
     }
   index.html: |
@@ -219,6 +268,7 @@ data:
           <a class="nav-item" href="/prometheus/">Prometheus</a>
           <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="/hortusfox/">HortusFox</a>
+          <a class="nav-item" href="/mealie/">Mealie</a>
           <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
         </aside>
         <section class="content">
@@ -243,6 +293,7 @@ data:
               <a class="link-card" href="http://192.168.10.128:8123/"><div class="link-title">Home Assistant</div><div class="link-meta">Native OS home automation dashboard and onboarding.</div></a>
               <a class="link-card" href="https://192.168.10.128:30443/"><div class="link-title">Argo CD</div><div class="link-meta">GitOps application status and sync dashboard.</div></a>
               <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
+              <a class="link-card" href="/mealie/"><div class="link-title">Mealie</div><div class="link-meta">Recipe management, meal planning, and kitchen organization.</div></a>
               <a class="link-card" href="/prometheus/"><div class="link-title">Prometheus</div><div class="link-meta">Metrics collection, targets, and time-series queries.</div></a>
               <a class="link-card" href="/grafana/"><div class="link-title">Grafana</div><div class="link-meta">Dashboards and visualizations backed by Prometheus.</div></a>
               <a class="link-card" href="http://192.168.10.176:4444/home"><div class="link-title">Old homepage</div><div class="link-meta">The original Prinsengracht homepage at 192.168.10.176:4444/home.</div></a>
@@ -258,6 +309,7 @@ data:
               <div class="tile"><strong>/adguard</strong><span>AdGuard Home route</span></div>
               <div class="tile"><strong>/prometheus</strong><span>Prometheus metrics route</span></div>
               <div class="tile"><strong>/grafana</strong><span>Grafana dashboards route</span></div>
+              <div class="tile"><strong>/mealie</strong><span>Mealie recipe manager route</span></div>
             </div>
           </section>
         </section>

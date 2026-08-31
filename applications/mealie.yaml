@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mealie-bootstrap
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/part-of: homeserver-gitops
+  annotations:
+    homeserver.maxfelius.nl/bootstrap-note: "Generated local bootstrap secrets for initial Mealie deployment; rotate after first login if desired."
+type: Opaque
+stringData:
+  SECRET: "QK1O5GbuK57wPKvIAGgYN6wVgLlC9rF4uWoPmOZrX_Sxo55JoufwXnlz1EzBS03M"
+  SESSION_SECRET: "HBt_vPf2aY8fpOKJgv4du-1E3pU2FTHyUmm7C0GXkj6ErESvUEwf90apqabw2Wul"
+  INITIAL_ADMIN_EMAIL: "mealie-admin@home.local"
+  INITIAL_ADMIN_PASSWORD: "zfU1rmhfO2tDKftKIy085grM"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mealie
+        app.kubernetes.io/part-of: homeserver-gitops
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: mealie
+          image: ghcr.io/mealie-recipes/mealie:v3.24.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - |
+                    (
+                      set -eu
+                      marker=/app/data/.homeserver-initial-admin-updated
+                      [ -f "$marker" ] && exit 0
+                      for i in $(seq 1 120); do
+                        python - <<'PY' && exit 0 || true
+                    import os
+                    from pathlib import Path
+
+                    from mealie.core.security.security import hash_password
+                    from mealie.db.db_setup import session_context
+                    from mealie.repos.repository_factory import AllRepositories
+
+                    marker = Path("/app/data/.homeserver-initial-admin-updated")
+                    if marker.exists():
+                        raise SystemExit(0)
+
+                    with session_context() as session:
+                        repos = AllRepositories(session, group_id=None, household_id=None)
+                        user = repos.users.get_one("changeme@example.com", "email")
+                        if not user:
+                            raise RuntimeError("default bootstrap user not ready")
+
+                        user.email = os.environ["MEALIE_INITIAL_ADMIN_EMAIL"]
+                        user.username = "admin"
+                        repos.users.update(user.id, user)
+                        repos.users.update_password(
+                            user.id,
+                            hash_password(os.environ["MEALIE_INITIAL_ADMIN_PASSWORD"]),
+                        )
+                        marker.write_text("updated\n")
+                    PY
+                        sleep 2
+                      done
+                    ) &
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: ALLOW_SIGNUP
+              value: "false"
+            - name: ALLOW_PASSWORD_LOGIN
+              value: "true"
+            - name: DB_ENGINE
+              value: sqlite
+            - name: SQLITE_MIGRATE_JOURNAL_WAL
+              value: "true"
+            - name: BASE_URL
+              value: http://192.168.10.128/mealie
+            - name: SUB_PATH
+              value: /mealie
+            - name: DEFAULT_GROUP
+              value: Home
+            - name: DEFAULT_HOUSEHOLD
+              value: Family
+            - name: LOG_LEVEL
+              value: info
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-bootstrap
+                  key: SECRET
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-bootstrap
+                  key: SESSION_SECRET
+            - name: MEALIE_INITIAL_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-bootstrap
+                  key: INITIAL_ADMIN_EMAIL
+            - name: MEALIE_INITIAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-bootstrap
+                  key: INITIAL_ADMIN_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /api/app/about
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /api/app/about
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1000Mi
+          volumeMounts:
+            - name: mealie-data
+              mountPath: /app/data
+      volumes:
+        - name: mealie-data
+          hostPath:
+            path: /home/max/homeserver-data/mealie/data
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mealie
+  ports:
+    - name: http
+      port: 9000
+      targetPort: http
+      protocol: TCP
