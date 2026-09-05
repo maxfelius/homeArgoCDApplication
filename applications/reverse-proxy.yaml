@@ -157,6 +157,26 @@ data:
           proxy_cookie_path / /adguard/;
         }
 
+        location = /netalertx {
+          return 308 $external_scheme://$http_host/netalertx/;
+        }
+
+        location /netalertx/ {
+          set $netalertx_upstream "netalertx.homeserver.svc.cluster.local:20211";
+          rewrite ^/netalertx/(.*)$ /$1 break;
+          proxy_pass http://$netalertx_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /netalertx;
+          proxy_redirect ~^https?://[^/]+(/.*)$ $external_scheme://$http_host/netalertx$1;
+          proxy_redirect ~^(/.*)$ $external_scheme://$http_host/netalertx$1;
+          proxy_cookie_path / /netalertx/;
+        }
+
         location = /research {
           return 308 $external_scheme://$http_host/research/;
         }
@@ -286,6 +306,7 @@ data:
           <a class="nav-item" href="/prometheus/">Prometheus</a>
           <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="/hortusfox/">HortusFox</a>
+          <a class="nav-item" href="http://192.168.10.128:20211/">Network Inventory</a>
           <a class="nav-item" href="/research/">Research</a>
           <a class="nav-item" href="/mealie/">Mealie</a>
           <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
@@ -312,6 +333,7 @@ data:
               <a class="link-card" href="http://192.168.10.128:8123/"><div class="link-title">Home Assistant</div><div class="link-meta">Native OS home automation dashboard and onboarding.</div></a>
               <a class="link-card" href="https://192.168.10.128:30443/"><div class="link-title">Argo CD</div><div class="link-meta">GitOps application status and sync dashboard.</div></a>
               <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
+              <a class="link-card" href="http://192.168.10.128:20211/"><div class="link-title">Network Inventory</div><div class="link-meta">NetAlertX LAN IP, MAC, port, service, and topology discovery.</div></a>
               <a class="link-card" href="/research/"><div class="link-title">Research</div><div class="link-meta">Browse, create, edit, and organize research notes.</div></a>
               <a class="link-card" href="/mealie/"><div class="link-title">Mealie</div><div class="link-meta">Recipe management, meal planning, and kitchen organization.</div></a>
               <a class="link-card" href="/prometheus/"><div class="link-title">Prometheus</div><div class="link-meta">Metrics collection, targets, and time-series queries.</div></a>
@@ -329,6 +351,8 @@ data:
               <div class="tile"><strong>/adguard</strong><span>AdGuard Home route</span></div>
               <div class="tile"><strong>/prometheus</strong><span>Prometheus metrics route</span></div>
               <div class="tile"><strong>/grafana</strong><span>Grafana dashboards route</span></div>
+              <div class="tile"><strong>:20211</strong><span>NetAlertX network inventory UI</span></div>
+              <div class="tile"><strong>/netalertx</strong><span>Best-effort reverse-proxy route</span></div>
               <div class="tile"><strong>/research</strong><span>Research notes browser route</span></div>
               <div class="tile"><strong>/mealie</strong><span>Mealie recipe manager route</span></div>
             </div>
