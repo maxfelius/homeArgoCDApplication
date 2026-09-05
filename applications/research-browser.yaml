@@ -1,0 +1,201 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: research-browser-app
+  labels:
+    app.kubernetes.io/name: research-browser
+    app.kubernetes.io/part-of: homeserver-gitops
+data:
+  app.py: |
+    import html, json, os, posixpath, shutil, time
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from pathlib import Path
+    from urllib.parse import parse_qs, unquote, urlparse
+
+    ROOT = Path(os.environ.get("RESEARCH_ROOT", "/data")).resolve()
+    BASE = os.environ.get("BASE_PATH", "/research").rstrip("/")
+    HERMES = os.environ.get("HERMES_CHAT_URL", "").strip()
+    ROOT.mkdir(parents=True, exist_ok=True)
+
+    def clean(raw=""):
+        raw = unquote(str(raw or "")).replace("\\", "/").strip()
+        if raw in ("", ".", "/"):
+            return ""
+        return posixpath.normpath("/" + raw).lstrip("/")
+
+    def safe(raw=""):
+        rel = clean(raw)
+        path = (ROOT / rel).resolve()
+        if path != ROOT and ROOT not in path.parents:
+            raise ValueError("path escapes research root")
+        return rel, path
+
+    def info(path):
+        st = path.stat()
+        return {"name": path.name, "type": "directory" if path.is_dir() else "file", "size": st.st_size, "mtimeText": time.strftime("%Y-%m-%d %H:%M", time.localtime(st.st_mtime))}
+
+    PAGE = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Research Browser</title><style>
+    :root{--bg:#f3f6fb;--card:#fff;--card2:#eef3f9;--text:#1f2937;--muted:#64748b;--accent:#2563eb;--danger:#dc2626;--border:rgba(15,23,42,.1);--shadow:0 18px 40px rgba(15,23,42,.10)}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top left,rgba(37,99,235,.10),transparent 24%),linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);color:var(--text)}header{position:sticky;top:0;z-index:10;display:flex;gap:14px;align-items:center;padding:14px 20px;background:rgba(248,251,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}.badge{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#60a5fa);box-shadow:0 12px 20px rgba(37,99,235,.22)}h1{font-size:1.2rem;margin:0}.sub{color:var(--muted);font-size:.9rem}.grow{flex:1}button,.btn{border:0;border-radius:12px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;gap:8px;align-items:center}button.secondary{background:var(--card2);color:var(--text)}button.danger{background:var(--danger)}main{max-width:1500px;margin:0 auto;padding:22px;display:grid;grid-template-columns:360px 1fr;gap:20px}.panel{background:var(--card);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:18px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.crumbs{color:var(--muted);font-size:.92rem;margin:6px 0 14px}.crumbs a{color:var(--accent);cursor:pointer;text-decoration:none}.item{display:flex;align-items:center;gap:10px;padding:11px;border-radius:14px;cursor:pointer;border:1px solid transparent}.item:hover,.item.active{background:var(--card2);border-color:var(--border)}.icon{width:28px;text-align:center}.meta{font-size:.78rem;color:var(--muted)}.name{font-weight:750;word-break:break-word}.list{max-height:calc(100vh - 260px);overflow:auto}input,textarea{width:100%;border:1px solid var(--border);border-radius:14px;padding:11px 13px;font:inherit;background:#fff;color:var(--text)}textarea{min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;line-height:1.5}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.preview{min-height:420px;max-height:70vh;overflow:auto;padding:15px;background:#fff;border:1px solid var(--border);border-radius:14px;line-height:1.65}.preview pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto}.preview code{background:#eef3f9;padding:2px 5px;border-radius:6px}.empty{padding:40px;text-align:center;color:var(--muted);background:var(--card2);border-radius:18px}.chat{position:fixed;right:22px;bottom:22px;width:min(440px,calc(100vw - 44px));display:none;z-index:20}.chat.open{display:block}.chat textarea{min-height:150px}.notice{font-size:.88rem;color:var(--muted);line-height:1.5}@media(max-width:1000px){main{grid-template-columns:1fr}.split{grid-template-columns:1fr}.list{max-height:none}}
+    </style></head><body><header><div class="badge"></div><div><h1>Research Browser</h1><div class="sub">Browse, create, edit, and delete research files under /home/max/research</div></div><div class="grow"></div><a class="btn" href="/">Home</a><button class="secondary" onclick="openChat()">Chat with Hermes</button></header><main><section class="panel"><div class="sub">Current folder</div><div class="crumbs" id="crumbs"></div><div class="toolbar"><button onclick="newFolder()">New folder</button><button onclick="newFile()">New file</button><button class="secondary" onclick="loadList()">Refresh</button></div><input id="filter" placeholder="Filter files" oninput="renderList()"><div class="list" id="list"></div></section><section class="panel"><div id="viewer" class="empty">Select a Markdown or text file to view/edit it. Select a folder to open it.</div></section></main><section class="panel chat" id="chat"><h2>Chat with Hermes</h2><p class="notice">This prepares a request for Hermes. Direct browser-to-Hermes editing is intentionally not enabled yet because this LAN app can write files. Copy the prompt and send it in your Telegram DM with Hermes.</p><textarea id="chatText"></textarea><div class="toolbar"><button onclick="copyPrompt()">Copy prompt</button><button class="secondary" onclick="openHermes()">Open Hermes link</button><button class="secondary" onclick="closeChat()">Close</button></div><div class="notice" id="chatStatus"></div></section><script>
+    const BASE=location.pathname.startsWith('/research')?'/research':'';const HERMES=__HERMES__;let cwd='',entries=[],selected=null;function api(p,o={}){return fetch(BASE+p,{headers:{'Content-Type':'application/json'},...o}).then(async r=>{let t=await r.text(),d=t?JSON.parse(t):{};if(!r.ok)throw Error(d.error||r.statusText);return d})}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function join(a,b){return [a,b].filter(Boolean).join('/').replace(/\/+/g,'/')}async function loadList(path=cwd){let d=await api('/api/list?path='+encodeURIComponent(path));cwd=d.path;entries=d.entries;selected=null;renderCrumbs();renderList();viewer.className='empty';viewer.innerHTML='Select a Markdown or text file to view/edit it. Select a folder to open it.'}function renderCrumbs(){let parts=cwd?cwd.split('/'):[],html='<a onclick="loadList(\'\')">research</a>',p='';for(const part of parts){p=join(p,part);html+=' / <a onclick="loadList(\''+esc(p)+'\')">'+esc(part)+'</a>'}crumbs.innerHTML=html}function renderList(){let q=filter.value.toLowerCase();list.innerHTML=entries.filter(e=>e.name.toLowerCase().includes(q)).map(e=>`<div class="item ${selected===e.name?'active':''}" onclick="openItem('${esc(e.name)}','${e.type}')"><div class="icon">${e.type==='directory'?'📁':'📄'}</div><div class="grow"><div class="name">${esc(e.name)}</div><div class="meta">${e.type} · ${e.type==='file'?e.size+' bytes · ':''}${esc(e.mtimeText)}</div></div><button class="danger" onclick="event.stopPropagation();deleteItem('${esc(e.name)}','${e.type}')">Delete</button></div>`).join('')||'<div class="empty">No files/folders here.</div>'}async function openItem(name,type){selected=name;renderList();let path=join(cwd,name);if(type==='directory')return loadList(path);let d=await api('/api/file?path='+encodeURIComponent(path));showFile(d.path,d.content)}function md(src){return esc(src).replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^# (.*)$/gm,'<h1>$1</h1>').replace(/```([\s\S]*?)```/g,'<pre><code>$1</code></pre>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n- (.*)/g,'<br>• $1').replace(/\n/g,'<br>')}function showFile(path,content){viewer.className='';viewer.innerHTML=`<div class="sub">Editing</div><h2>${esc(path)}</h2><div class="toolbar"><button onclick="saveFile('${esc(path)}')">Save</button><button class="secondary" onclick="openChat('${esc(path)}')">Ask Hermes about this file</button></div><div class="split"><textarea id="editor" oninput="updatePreview()"></textarea><div class="preview" id="preview"></div></div>`;editor.value=content;updatePreview()}function updatePreview(){preview.innerHTML=md(editor.value)}async function saveFile(path){await api('/api/file',{method:'PUT',body:JSON.stringify({path,content:editor.value})});await loadList(cwd);alert('Saved '+path)}async function newFolder(){let name=prompt('Folder name');if(!name)return;await api('/api/folder',{method:'POST',body:JSON.stringify({path:cwd,name})});loadList(cwd)}async function newFile(){let name=prompt('File name, e.g. notes.md');if(!name)return;await api('/api/file',{method:'POST',body:JSON.stringify({path:join(cwd,name),content:'# '+name+'\n'})});loadList(cwd)}async function deleteItem(name,type){if(!confirm('Delete '+type+' '+name+'?'))return;await api('/api/item',{method:'DELETE',body:JSON.stringify({path:join(cwd,name)})});loadList(cwd)}function openChat(path=''){chat.classList.add('open');let context=path||cwd||'research root';chatText.value=`Please help with the research item: ${context}\n\nI want to edit it or do more research. Use /home/max/research as the source of truth.`}function closeChat(){chat.classList.remove('open')}async function copyPrompt(){await navigator.clipboard.writeText(chatText.value);chatStatus.textContent='Copied. Paste this into your Telegram chat with Hermes.'}function openHermes(){if(HERMES){location.href=HERMES}else{chatStatus.textContent='No HERMES_CHAT_URL configured yet. Use Telegram DM with Hermes.'}}loadList().catch(e=>{document.body.innerHTML='<pre>'+esc(e.stack||e.message)+'</pre>'})
+    </script></body></html>'''
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, fmt, *args): print(fmt % args, flush=True)
+        def sendj(self, obj, code=200):
+            b=json.dumps(obj).encode(); self.send_response(code); self.send_header('Content-Type','application/json'); self.send_header('Content-Length',str(len(b))); self.end_headers(); self.wfile.write(b)
+        def fail(self, msg, code=400): self.sendj({'error': msg}, code)
+        def body(self):
+            n=int(self.headers.get('Content-Length','0') or 0)
+            if n > 5*1024*1024: raise ValueError('request too large')
+            return json.loads(self.rfile.read(n).decode() or '{}') if n else {}
+        def route(self):
+            u=urlparse(self.path); p=u.path
+            if BASE and p == BASE:
+                self.send_response(308); self.send_header('Location', BASE + '/'); self.end_headers(); return None, None
+            if BASE and p.startswith(BASE + '/'):
+                p = p[len(BASE):] or '/'
+            return p, parse_qs(u.query)
+        def do_GET(self):
+            try:
+                p,q=self.route()
+                if p is None: return
+                if p in ('/','/index.html'):
+                    b=PAGE.replace('__HERMES__', json.dumps(HERMES)).encode(); self.send_response(200); self.send_header('Content-Type','text/html; charset=utf-8'); self.send_header('Content-Length',str(len(b))); self.end_headers(); self.wfile.write(b); return
+                if p == '/healthz': self.send_response(200); self.end_headers(); self.wfile.write(b'ok\n'); return
+                if p == '/api/list':
+                    rel, folder = safe((q.get('path') or [''])[0])
+                    if not folder.is_dir(): return self.fail('folder not found', 404)
+                    items=[info(x) for x in folder.iterdir() if not x.name.startswith('.')]
+                    items.sort(key=lambda x:(x['type']!='directory', x['name'].lower()))
+                    return self.sendj({'path': rel, 'entries': items})
+                if p == '/api/file':
+                    rel, f = safe((q.get('path') or [''])[0])
+                    if not f.is_file(): return self.fail('file not found', 404)
+                    return self.sendj({'path': rel, 'content': f.read_text(errors='replace')})
+                self.fail('not found', 404)
+            except Exception as e: self.fail(str(e), 500)
+        def do_POST(self):
+            try:
+                p,q=self.route(); d=self.body()
+                if p == '/api/folder':
+                    _, base = safe(d.get('path','')); name=clean(d.get('name',''))
+                    if not name or '/' in name: return self.fail('folder name must be a single safe segment')
+                    target=(base/name).resolve()
+                    if ROOT not in target.parents: return self.fail('path escapes research root')
+                    target.mkdir(); return self.sendj({'ok': True})
+                if p == '/api/file':
+                    rel, f = safe(d.get('path','')); f.parent.mkdir(parents=True, exist_ok=True)
+                    if f.exists(): return self.fail('file already exists', 409)
+                    f.write_text(d.get('content','')); return self.sendj({'ok': True, 'path': rel})
+                self.fail('not found', 404)
+            except FileExistsError: self.fail('already exists', 409)
+            except Exception as e: self.fail(str(e), 500)
+        def do_PUT(self):
+            try:
+                p,q=self.route(); d=self.body()
+                if p == '/api/file':
+                    rel, f = safe(d.get('path','')); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(d.get('content','')); return self.sendj({'ok': True, 'path': rel})
+                self.fail('not found', 404)
+            except Exception as e: self.fail(str(e), 500)
+        def do_DELETE(self):
+            try:
+                p,q=self.route(); d=self.body()
+                if p == '/api/item':
+                    rel, target = safe(d.get('path',''))
+                    if target == ROOT: return self.fail('cannot delete research root')
+                    if not target.exists(): return self.fail('not found', 404)
+                    shutil.rmtree(target) if target.is_dir() else target.unlink(); return self.sendj({'ok': True, 'path': rel})
+                self.fail('not found', 404)
+            except Exception as e: self.fail(str(e), 500)
+
+    if __name__ == '__main__':
+        port=int(os.environ.get('PORT','8080'))
+        print(f'serving research browser on 0.0.0.0:{port} root={ROOT}', flush=True)
+        ThreadingHTTPServer(('0.0.0.0', port), H).serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: research-browser
+  labels:
+    app.kubernetes.io/name: research-browser
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: research-browser
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: research-browser
+        app.kubernetes.io/part-of: homeserver-gitops
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: research-browser
+          image: python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["python", "/app/app.py"]
+          env:
+            - name: PORT
+              value: "8080"
+            - name: RESEARCH_ROOT
+              value: /data
+            - name: BASE_PATH
+              value: /research
+            - name: HERMES_CHAT_URL
+              value: ""
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: app
+              mountPath: /app/app.py
+              subPath: app.py
+              readOnly: true
+            - name: research-data
+              mountPath: /data
+      volumes:
+        - name: app
+          configMap:
+            name: research-browser-app
+            defaultMode: 0555
+        - name: research-data
+          hostPath:
+            path: /home/max/research
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-browser
+  labels:
+    app.kubernetes.io/name: research-browser
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: research-browser
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
