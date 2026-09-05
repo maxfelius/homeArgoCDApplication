@@ -162,7 +162,7 @@ data:
         }
 
         location /netalertx/ {
-          set $netalertx_upstream "netalertx.homeserver.svc.cluster.local:20211";
+          set $netalertx_upstream "192.168.10.128:20211";
           rewrite ^/netalertx/(.*)$ /$1 break;
           proxy_pass http://$netalertx_upstream;
           proxy_http_version 1.1;
@@ -306,7 +306,7 @@ data:
           <a class="nav-item" href="/prometheus/">Prometheus</a>
           <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="/hortusfox/">HortusFox</a>
-          <a class="nav-item" href="http://192.168.10.128:20211/">Network Inventory</a>
+          <a class="nav-item" href="/netalertx/">Network Inventory</a>
           <a class="nav-item" href="/research/">Research</a>
           <a class="nav-item" href="/mealie/">Mealie</a>
           <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
@@ -333,7 +333,7 @@ data:
               <a class="link-card" href="http://192.168.10.128:8123/"><div class="link-title">Home Assistant</div><div class="link-meta">Native OS home automation dashboard and onboarding.</div></a>
               <a class="link-card" href="https://192.168.10.128:30443/"><div class="link-title">Argo CD</div><div class="link-meta">GitOps application status and sync dashboard.</div></a>
               <a class="link-card" href="/hortusfox/"><div class="link-title">HortusFox</div><div class="link-meta">Plant management workspace.</div></a>
-              <a class="link-card" href="http://192.168.10.128:20211/"><div class="link-title">Network Inventory</div><div class="link-meta">NetAlertX LAN IP, MAC, port, service, and topology discovery.</div></a>
+              <a class="link-card" href="/netalertx/"><div class="link-title">Network Inventory</div><div class="link-meta">NetAlertX LAN IP, MAC, port, service, and topology discovery.</div></a>
               <a class="link-card" href="/research/"><div class="link-title">Research</div><div class="link-meta">Browse, create, edit, and organize research notes.</div></a>
               <a class="link-card" href="/mealie/"><div class="link-title">Mealie</div><div class="link-meta">Recipe management, meal planning, and kitchen organization.</div></a>
               <a class="link-card" href="/prometheus/"><div class="link-title">Prometheus</div><div class="link-meta">Metrics collection, targets, and time-series queries.</div></a>
