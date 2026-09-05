@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netalertx
+  labels:
+    app.kubernetes.io/name: netalertx
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netalertx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: netalertx
+        app.kubernetes.io/part-of: homeserver-gitops
+    spec:
+      # NetAlertX needs host-level LAN visibility for ARP/Nmap discovery.
+      # Keep this single-node/LAN-only unless authentication + exposure are reviewed.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: netalertx
+          image: jokobsk/netalertx:26.9.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: PORT
+              value: "20211"
+            - name: LISTEN_ADDR
+              value: "0.0.0.0"
+            - name: LOADED_PLUGINS
+              value: '["ARPSCAN","IPNEIGH","NMAPDEV","NMAP","NSLOOKUP","DIGSCAN","AVAHISCAN","NTFPRCS","CUSTPROP","DBCLNP"]'
+            - name: APP_CONF_OVERRIDE
+              value: '{"SCAN_SUBNETS":"[\"192.168.10.0/24 --interface=enp1s0f0\"]","GRAPHQL_PORT":"20212"}'
+          ports:
+            - name: http
+              containerPort: 20211
+              protocol: TCP
+            - name: api
+              containerPort: 20212
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 60
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: logs
+              mountPath: /tmp/log
+            - name: api-cache
+              mountPath: /tmp/api
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: data
+          hostPath:
+            path: /home/max/appdata/netalertx
+            type: DirectoryOrCreate
+        - name: logs
+          hostPath:
+            path: /home/max/appdata/netalertx/log
+            type: DirectoryOrCreate
+        - name: api-cache
+          hostPath:
+            path: /home/max/appdata/netalertx/api
+            type: DirectoryOrCreate
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netalertx
+  labels:
+    app.kubernetes.io/name: netalertx
+    app.kubernetes.io/part-of: homeserver-gitops
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: netalertx
+  ports:
+    - name: http
+      port: 20211
+      targetPort: http
+      protocol: TCP
+    - name: api
+      port: 20212
+      targetPort: api
+      protocol: TCP
