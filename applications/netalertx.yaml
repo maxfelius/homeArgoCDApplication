@@ -40,7 +40,7 @@ spec:
             - name: LOADED_PLUGINS
               value: '["ARPSCAN","IPNEIGH","NMAPDEV","NMAP","NSLOOKUP","DIGSCAN","AVAHISCAN","NTFPRCS","CUSTPROP","DBCLNP"]'
             - name: APP_CONF_OVERRIDE
-              value: '{"SCAN_SUBNETS":["192.168.10.0/24 --interface=enp1s0f0"],"GRAPHQL_PORT":20212}'
+              value: '{"SCAN_SUBNETS":["192.168.10.0/24 --interface=enp1s0f0"],"GRAPHQL_PORT":20212,"IPNEIGH_RUN":"always_after_scan","NMAPDEV_RUN":"schedule","NMAPDEV_RUN_SCHD":"*/10 * * * *","NMAP_RUN":"schedule","NMAP_RUN_SCHD":"0 3 * * *","NMAP_RUN_TIMEOUT":60}'
           ports:
             - name: http
               containerPort: 20211
