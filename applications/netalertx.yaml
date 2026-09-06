@@ -40,7 +40,7 @@ spec:
             - name: LOADED_PLUGINS
               value: '["ARPSCAN","IPNEIGH","NMAPDEV","NMAP","NSLOOKUP","DIGSCAN","AVAHISCAN","NTFPRCS","CUSTPROP","DBCLNP"]'
             - name: APP_CONF_OVERRIDE
-              value: '{"SCAN_SUBNETS":"[\"192.168.10.0/24 --interface=enp1s0f0\"]","GRAPHQL_PORT":"20212"}'
+              value: '{"SCAN_SUBNETS":["192.168.10.0/24 --interface=enp1s0f0"],"GRAPHQL_PORT":20212}'
           ports:
             - name: http
               containerPort: 20211
