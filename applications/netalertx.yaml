@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: netalertx
     app.kubernetes.io/part-of: homeserver-gitops
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
