@@ -157,26 +157,6 @@ data:
           proxy_cookie_path / /adguard/;
         }
 
-        location = /netalertx {
-          return 308 $external_scheme://$http_host/netalertx/;
-        }
-
-        location /netalertx/ {
-          set $netalertx_upstream "192.168.10.128:20211";
-          rewrite ^/netalertx/(.*)$ /$1 break;
-          proxy_pass http://$netalertx_upstream;
-          proxy_http_version 1.1;
-          proxy_set_header Host $http_host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $external_scheme;
-          proxy_set_header X-Forwarded-Host $http_host;
-          proxy_set_header X-Forwarded-Prefix /netalertx;
-          proxy_redirect ~^https?://[^/]+(/.*)$ $external_scheme://$http_host/netalertx$1;
-          proxy_redirect ~^(/.*)$ $external_scheme://$http_host/netalertx$1;
-          proxy_cookie_path / /netalertx/;
-        }
-
         location = /research {
           return 308 $external_scheme://$http_host/research/;
         }
