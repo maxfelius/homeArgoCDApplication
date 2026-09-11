@@ -28,6 +28,24 @@ spec:
           value: "true"
         - name: BASE_PATH
           value: "/speedtest"
+        readinessProbe:
+          httpGet:
+            path: /speedtest/
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - '! ps aux | grep -F "/config/www/app/Bin/speedtest" | grep -v grep >/dev/null'
+          initialDelaySeconds: 300
+          periodSeconds: 300
+          timeoutSeconds: 5
+          failureThreshold: 3
         volumeMounts:
         - name: config
           mountPath: /config
