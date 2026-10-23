@@ -121,6 +121,7 @@ spec:
                   -e "s#'/images/#'/pdf/images/#g" \
                   -e 's#"/pdfjs-viewer/#"/pdf/pdfjs-viewer/#g' \
                   -e "s#'/pdfjs-viewer/#'/pdf/pdfjs-viewer/#g" \
+                  -e 's#`/pdfjs-viewer/#`/pdf/pdfjs-viewer/#g' \
                   -e 's#"/pdfjs-annotation-viewer/#"/pdf/pdfjs-annotation-viewer/#g' \
                   -e "s#'/pdfjs-annotation-viewer/#'/pdf/pdfjs-annotation-viewer/#g" \
                   -e 's#"/libreoffice-wasm/#"/pdf/libreoffice-wasm/#g' \
