@@ -116,6 +116,7 @@ spec:
                 | xargs -0 sed -i \
                   -e 's#"/assets/#"/pdf/assets/#g' \
                   -e "s#'/assets/#'/pdf/assets/#g" \
+                  -e 's#`/assets/#`/pdf/assets/#g' \
                   -e 's#"/images/#"/pdf/images/#g' \
                   -e "s#'/images/#'/pdf/images/#g" \
                   -e 's#"/pdfjs-viewer/#"/pdf/pdfjs-viewer/#g' \
