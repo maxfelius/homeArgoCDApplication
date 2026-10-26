@@ -41,10 +41,10 @@ spec:
             command:
             - sh
             - -c
-            - '! ps aux | grep -F "/config/www/app/Bin/speedtest" | grep -v grep >/dev/null'
+            - 'wget -q -T 5 -O /dev/null http://127.0.0.1/speedtest/ && ! ps aux | grep -F "/config/www/app/Bin/speedtest" | grep -v grep >/dev/null'
           initialDelaySeconds: 300
           periodSeconds: 300
-          timeoutSeconds: 5
+          timeoutSeconds: 10
           failureThreshold: 3
         volumeMounts:
         - name: config
