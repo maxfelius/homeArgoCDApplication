@@ -132,6 +132,8 @@ spec:
         app.kubernetes.io/name: research-browser
         app.kubernetes.io/part-of: homeserver-gitops
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: max-server-auto
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
