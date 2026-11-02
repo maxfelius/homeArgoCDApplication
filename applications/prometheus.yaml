@@ -280,9 +280,6 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: max-server-auto
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
         fsGroup: 65534
         seccompProfile:
           type: RuntimeDefault
@@ -293,6 +290,7 @@ spec:
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus && chmod 0750 /prometheus"]
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: false
             runAsUser: 0
             runAsGroup: 0
             capabilities:
@@ -323,6 +321,9 @@ spec:
               protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
             capabilities:
               drop: ["ALL"]
             readOnlyRootFilesystem: true
@@ -414,9 +415,6 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: max-macbookpro
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
         fsGroup: 65534
         seccompProfile:
           type: RuntimeDefault
@@ -427,6 +425,7 @@ spec:
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus && chmod 0750 /prometheus"]
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: false
             runAsUser: 0
             runAsGroup: 0
             capabilities:
@@ -457,6 +456,9 @@ spec:
               protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
             capabilities:
               drop: ["ALL"]
             readOnlyRootFilesystem: true
