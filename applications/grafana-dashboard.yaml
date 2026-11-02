@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: homeserver-gitops
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: homeserver-node-health
+        orgId: 1
+        folder: Homeserver
+        type: file
+        disableDeletion: true
+        editable: false
+        updateIntervalSeconds: 30
+        options:
+          path: /etc/grafana/provisioning/dashboards/homeserver
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-node-dashboard
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: homeserver-gitops
+data:
+  node-overview.json: |
+    {
+      "id": null,
+      "uid": "homeserver-node-overview",
+      "title": "Kubernetes Node Health",
+      "description": "CPU, memory, load, filesystem, network and exporter health from each node-local Prometheus instance.",
+      "tags": ["homeserver", "kubernetes", "nodes", "prometheus"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "editable": false,
+      "refresh": "30s",
+      "time": {"from": "now-6h", "to": "now"},
+      "templating": {"list": []},
+      "links": [],
+      "panels": [
+        {"id":1,"title":"Exporter UP - max-server-auto","type":"stat","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":4,"w":12,"x":0,"y":0},"fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[{"options":{"0":{"text":"DOWN"},"1":{"text":"UP"}},"type":"value"}],"thresholds":{"mode":"absolute","steps":[{"color":"red","value":null},{"color":"green","value":1}]},"unit":"short"},"overrides":[]},"options":{"colorMode":"background","graphMode":"none","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"value_and_name","wideLayout":true},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"up{job=\"node-exporter\",node=\"max-server-auto\"}","instant":true,"range":false,"refId":"A"}]},
+        {"id":2,"title":"Exporter UP - max-macbookpro","type":"stat","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":4,"w":12,"x":12,"y":0},"fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[{"options":{"0":{"text":"DOWN"},"1":{"text":"UP"}},"type":"value"}],"thresholds":{"mode":"absolute","steps":[{"color":"red","value":null},{"color":"green","value":1}]},"unit":"short"},"overrides":[]},"options":{"colorMode":"background","graphMode":"none","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"value_and_name","wideLayout":true},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"up{job=\"node-exporter\",node=\"max-macbookpro\"}","instant":true,"range":false,"refId":"A"}]},
+        {"id":3,"title":"CPU utilization - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":4},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",node=\"max-server-auto\"}[5m])))","legendFormat":"CPU used","range":true,"refId":"A"}]},
+        {"id":4,"title":"CPU utilization - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":4},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\",node=\"max-macbookpro\"}[5m])))","legendFormat":"CPU used","range":true,"refId":"A"}]},
+        {"id":5,"title":"Memory used - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":12},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"100 * (1 - node_memory_MemAvailable_bytes{node=\"max-server-auto\"} / node_memory_MemTotal_bytes{node=\"max-server-auto\"})","legendFormat":"Memory used","range":true,"refId":"A"}]},
+        {"id":6,"title":"Memory used - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":12},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"100 * (1 - node_memory_MemAvailable_bytes{node=\"max-macbookpro\"} / node_memory_MemTotal_bytes{node=\"max-macbookpro\"})","legendFormat":"Memory used","range":true,"refId":"A"}]},
+        {"id":7,"title":"Memory available - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":20},"fieldConfig":{"defaults":{"unit":"bytes","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"node_memory_MemAvailable_bytes{node=\"max-server-auto\"}","legendFormat":"Available RAM","range":true,"refId":"A"}]},
+        {"id":8,"title":"Memory available - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":20},"fieldConfig":{"defaults":{"unit":"bytes","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"node_memory_MemAvailable_bytes{node=\"max-macbookpro\"}","legendFormat":"Available RAM","range":true,"refId":"A"}]},
+        {"id":9,"title":"Load average 1m - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":28},"fieldConfig":{"defaults":{"unit":"short","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"node_load1{node=\"max-server-auto\"}","legendFormat":"Load 1m","range":true,"refId":"A"}]},
+        {"id":10,"title":"Load average 1m - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":28},"fieldConfig":{"defaults":{"unit":"short","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"node_load1{node=\"max-macbookpro\"}","legendFormat":"Load 1m","range":true,"refId":"A"}]},
+        {"id":11,"title":"Root filesystem used - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":36},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"rootfs|tmpfs\",node=\"max-server-auto\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"rootfs|tmpfs\",node=\"max-server-auto\"})","legendFormat":"Root filesystem used","range":true,"refId":"A"}]},
+        {"id":12,"title":"Root filesystem used - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":36},"fieldConfig":{"defaults":{"unit":"percent","min":0,"max":100},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"rootfs|tmpfs\",node=\"max-macbookpro\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"rootfs|tmpfs\",node=\"max-macbookpro\"})","legendFormat":"Root filesystem used","range":true,"refId":"A"}]},
+        {"id":13,"title":"Network I/O - max-server-auto","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-a"},"gridPos":{"h":8,"w":12,"x":0,"y":44},"fieldConfig":{"defaults":{"unit":"Bps","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"sum(rate(node_network_receive_bytes_total{node=\"max-server-auto\",device!=\"lo\"}[5m]))","legendFormat":"Receive","range":true,"refId":"A"},{"datasource":{"type":"prometheus","uid":"prometheus-a"},"editorMode":"code","expr":"sum(rate(node_network_transmit_bytes_total{node=\"max-server-auto\",device!=\"lo\"}[5m]))","legendFormat":"Transmit","range":true,"refId":"B"}]},
+        {"id":14,"title":"Network I/O - max-macbookpro","type":"timeseries","datasource":{"type":"prometheus","uid":"prometheus-b"},"gridPos":{"h":8,"w":12,"x":12,"y":44},"fieldConfig":{"defaults":{"unit":"Bps","min":0},"overrides":[]},"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"targets":[{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"sum(rate(node_network_receive_bytes_total{node=\"max-macbookpro\",device!=\"lo\"}[5m]))","legendFormat":"Receive","range":true,"refId":"A"},{"datasource":{"type":"prometheus","uid":"prometheus-b"},"editorMode":"code","expr":"sum(rate(node_network_transmit_bytes_total{node=\"max-macbookpro\",device!=\"lo\"}[5m]))","legendFormat":"Transmit","range":true,"refId":"B"}]}
+      ]
+    }
