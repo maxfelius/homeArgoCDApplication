@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/name: adguard-home
         app.kubernetes.io/part-of: homeserver-gitops
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: max-server-auto
       containers:
         - name: adguard-home
           image: adguard/adguardhome:v0.107.78

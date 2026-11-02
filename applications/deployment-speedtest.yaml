@@ -12,6 +12,8 @@ spec:
       labels:
         app: homeserver-speedtest
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: max-server-auto
       containers:
       - name: speedtest
         image: henrywhitaker3/speedtest-tracker
