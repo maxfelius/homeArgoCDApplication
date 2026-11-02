@@ -110,7 +110,21 @@ data:
           proxy_set_header X-Forwarded-Prefix /research;
         }
 
+        location = /grafana {
+          return 308 $external_scheme://$http_host/grafana/;
+        }
 
+        location /grafana/ {
+          set $grafana_upstream "grafana.monitoring.svc.cluster.local:3000";
+          proxy_pass http://$grafana_upstream;
+          proxy_http_version 1.1;
+          proxy_set_header Host $http_host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $external_scheme;
+          proxy_set_header X-Forwarded-Host $http_host;
+          proxy_set_header X-Forwarded-Prefix /grafana;
+        }
       }
     }
   index.html: |
@@ -178,6 +192,7 @@ data:
           <a class="nav-item" href="https://192.168.10.128:30443/">Argo CD</a>
 
           <a class="nav-item" href="/research/">Research</a>
+          <a class="nav-item" href="/grafana/">Grafana</a>
           <a class="nav-item" href="http://192.168.10.176:4444/home">Old homepage</a>
         </aside>
         <section class="content">
@@ -203,6 +218,7 @@ data:
               <a class="link-card" href="https://192.168.10.128:30443/"><div class="link-title">Argo CD</div><div class="link-meta">GitOps application status and sync dashboard.</div></a>
 
               <a class="link-card" href="/research/"><div class="link-title">Research</div><div class="link-meta">Browse, create, edit, and organize research notes.</div></a>
+              <a class="link-card" href="/grafana/"><div class="link-title">Grafana</div><div class="link-meta">Read-only dashboards for both Kubernetes nodes.</div></a>
 
               <a class="link-card" href="http://192.168.10.176:4444/home"><div class="link-title">Old homepage</div><div class="link-meta">The original Prinsengracht homepage at 192.168.10.176:4444/home.</div></a>
             </div>
@@ -217,6 +233,7 @@ data:
               <div class="tile"><strong>/adguard</strong><span>AdGuard Home route</span></div>
 
               <div class="tile"><strong>/research</strong><span>Research notes browser route</span></div>
+              <div class="tile"><strong>/grafana</strong><span>Node monitoring dashboards</span></div>
             </div>
           </section>
         </section>
@@ -245,7 +262,7 @@ spec:
         app.kubernetes.io/name: homeserver-reverse-proxy
         app.kubernetes.io/part-of: homeserver-gitops
       annotations:
-        checksum/config: 18a2aada10eed839c6dd551851fce411e4b65622fbe3e7cf887e56c03e485a2a
+        checksum/config: 69afdd83098c77371cc0718e3aa761edb5af95e8a028b2cafe0f107dcac69a63
     spec:
       containers:
         - name: nginx
