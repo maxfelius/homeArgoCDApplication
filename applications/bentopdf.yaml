@@ -99,6 +99,8 @@ spec:
         app.kubernetes.io/name: bentopdf
         app.kubernetes.io/part-of: homeserver-gitops
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: max-macbookpro
       initContainers:
         - name: prepare-site
           image: ghcr.io/alam00000/bentopdf-simple:v2.8.7
