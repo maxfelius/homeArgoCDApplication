@@ -66,7 +66,7 @@ spec:
         app.kubernetes.io/name: grafana
         app.kubernetes.io/part-of: homeserver-gitops
       annotations:
-        checksum/provisioning: b80af1583bd33620e809265eb3e8fff4f98a44c466706918522d0987068c0cc2
+        checksum/provisioning: f5e0f2548335e5127ad5c520754b62077ac0342d1e55ef443d25264f36e93fc0
     spec:
       nodeSelector:
         kubernetes.io/hostname: max-macbookpro

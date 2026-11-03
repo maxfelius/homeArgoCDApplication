@@ -92,8 +92,8 @@ spec:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
             - --web.listen-address=:9100
-            - --collector.netclass.ignored-devices=^(veth.*|cni.*|flannel.*|lo)$
-            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo)$
+            - --collector.netclass.ignored-devices=^(veth.*|cni.*|flannel.*|lo|br-.*|docker.*|tun.*|tap.*|wg.*|vti.*|ipsec.*|kube-ipvs0|virbr.*)$
+            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo|br-.*|docker.*|tun.*|tap.*|wg.*|vti.*|ipsec.*|kube-ipvs0|virbr.*)$
           ports:
             - name: metrics
               containerPort: 9100
@@ -196,8 +196,8 @@ spec:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
             - --web.listen-address=:9100
-            - --collector.netclass.ignored-devices=^(veth.*|cni.*|flannel.*|lo)$
-            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo)$
+            - --collector.netclass.ignored-devices=^(veth.*|cni.*|flannel.*|lo|br-.*|docker.*|tun.*|tap.*|wg.*|vti.*|ipsec.*|kube-ipvs0|virbr.*)$
+            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo|br-.*|docker.*|tun.*|tap.*|wg.*|vti.*|ipsec.*|kube-ipvs0|virbr.*)$
           ports:
             - name: metrics
               containerPort: 9100
